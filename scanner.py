@@ -9,6 +9,7 @@ def get_size_gb(bytes_val):
     """Convert bytes to gigabytes."""
     return round(bytes_val / (1024 ** 3), 2)
 
+# Checks battery sensors and chassis metadata to determine if components are modular (Desktop) or soldered/restricted (Laptop).
 def detect_form_factor():
     """
     Detect whether the system is a Laptop or Desktop.
@@ -103,6 +104,31 @@ def get_detailed_ram_hardware():
             ram_details["upgrade_advice"] = "All RAM slots occupied. Upgrading requires replacing existing sticks."
 
     return ram_details
+
+# Identifies whether the primary drive is solid-state or a spinning hard drive so the recommendation engine knows if
+# disk I/O will bottleneck model checkpoint loading.
+def get_storage_media_type():
+    """Detect whether primary storage is NVMe/SSD or rotational HDD."""
+    os_name = platform.system()
+    try:
+        if os_name == "Windows":
+            ps_cmd = "Get-PhysicalDisk | Select-Object MediaType, BusType | ConvertTo-Json"
+            output = subprocess.check_output(
+                ["powershell", "-NoProfile", "-Command", ps_cmd],
+                text=True, stderr=subprocess.DEVNULL, timeout=5
+            )
+            disks = json.loads(output.strip())
+            disk = disks[0] if isinstance(disks, list) else disks
+            media = disk.get("MediaType", "SSD")
+            bus = disk.get("BusType", "NVMe")
+            return f"{bus} {media}"
+        elif os_name == "Linux":
+            # Rotational = 0 means SSD/NVMe, 1 means HDD
+            with open("/sys/block/sda/queue/rotational", "r") as f:
+                return "SATA/SAS HDD" if f.read().strip() == "1" else "SSD / NVMe"
+    except Exception:
+        pass
+    return "SSD / NVMe (Assumed)"
 
 def get_gpu_info():
     """Retrieve GPU models and VRAM details."""
