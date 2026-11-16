@@ -1,4 +1,6 @@
 import platform
+import subprocess
+import json
 import psutil
 import cpuinfo
 import GPUtil
@@ -6,6 +8,24 @@ import GPUtil
 def get_size_gb(bytes_val):
     """Convert bytes to gigabytes."""
     return round(bytes_val / (1024 ** 3), 2)
+
+def detect_form_factor():
+    """
+    Detect whether the system is a Laptop or Desktop.
+    Laptops have battery sensors and restricted upgrade paths (soldered CPU/GPU).
+    """
+    battery = psutil.sensors_battery()
+    if battery is not None:
+        return {
+            "chassis_type": "Laptop",
+            "is_modular_desktop": False,
+            "power_plugged": battery.power_plugged
+        }
+    return {
+        "chassis_type": "Desktop / Server",
+        "is_modular_desktop": True,
+        "power_plugged": True
+    }
 
 def get_gpu_info():
     """Retrieve GPU models and VRAM details."""
