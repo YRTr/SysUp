@@ -140,7 +140,9 @@ def get_gpu_info():
                 "name": gpu.name,
                 "vram_total_gb": round(gpu.memoryTotal / 1024, 2),
                 "vram_free_gb": round(gpu.memoryFree / 1024, 2),
-                "driver": gpu.driver
+                "temperature_c": gpu.temperature,
+                "driver": gpu.driver,
+                "is_dedicated_nvidia": True
             })
     except Exception:
         pass
@@ -151,7 +153,9 @@ def get_gpu_info():
             "name": "Integrated / Non-NVIDIA GPU",
             "vram_total_gb": 0.0,
             "vram_free_gb": 0.0,
-            "driver": "N/A"
+            "temperature_c": None,
+            "driver": "N/A",
+            "is_dedicated_nvidia": False
         })
     return gpus
 
@@ -162,28 +166,35 @@ def scan_system_specs():
     cpu_specs = {
         "brand": cpu_data.get("brand_raw", platform.processor()),
         "arch": platform.machine(),
-        "physical_cores": psutil.cpu_count(logical=False),
-        "logical_cores": psutil.cpu_count(logical=True),
+        "physical_cores": psutil.cpu_count(logical=False) or 4,
+        "logical_cores": psutil.cpu_count(logical=True) or 8,
         "max_freq_mhz": psutil.cpu_freq().max if psutil.cpu_freq() else "N/A"
     }
 
     # RAM Information
     virtual_mem = psutil.virtual_memory()
+    ram_hw = get_detailed_ram_hardware()
     ram_specs = {
         "total_gb": get_size_gb(virtual_mem.total),
-        "available_gb": get_size_gb(virtual_mem.available)
+        "available_gb": get_size_gb(virtual_mem.available),
+        "speed_mhz": ram_hw["speed_mhz"],
+        "slots_used": ram_hw["slots_used"],
+        "slots_total": ram_hw["slots_total"],
+        "upgrad_advice": ram_hw["upgrade_device"]
     }
 
     # Storage Information (Primary Partition)
     disk_usage = psutil.disk_usage('/')
     storage_specs = {
         "total_gb": get_size_gb(disk_usage.total),
-        "free_gb": get_size_gb(disk_usage.free)
+        "free_gb": get_size_gb(disk_usage.free),
+        "media_type": get_storage_media_type()
     }
 
     # Compile full hardware profile
     return {
         "os": f"{platform.system()} {platform.release()}",
+        "form_factor": detect_form_factor(),
         "cpu": cpu_specs,
         "ram": ram_specs,
         "storage": storage_specs,
