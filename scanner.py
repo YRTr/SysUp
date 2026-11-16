@@ -27,6 +27,83 @@ def detect_form_factor():
         "power_plugged": True
     }
 
+# Queries OS hardware tables to detect RAM speed (MHz/MT/s) and how many DIMM slots are occupied vs total slots available
+def get_detailed_ram_hardware():
+    """
+    Probe OS-level SMBIOS/WMI tables for RAM speed (MHz) and physical DIMM slot usage.
+    """
+    os_name = platform.system()
+    ram_details = {
+        "speed_mhz": "Unknown",
+        "slots_used": "Unknown",
+        "slots_total": "Unknown",
+        "upgrade_advice": "Check motherboard manual for free DIMM slots."
+    }
+
+    try:
+        if os_name == "Windows":
+            # Query physical memory sticks and array capacity via PowerShell
+            ps_cmd = (
+                "Get-CimInstance Win32_PhysicalMemory | "
+                "Select-Object ConfiguredClockSpeed, Capacity | ConvertTo-Json; "
+                "Write-Output '---SPLIT---'; "
+                "Get-CimInstance Win32_PhysicalMemoryArray | "
+                "Select-Object MemoryDevices | ConvertTo-Json"
+            )
+            output = subprocess.check_output(
+                ["powershell", "-NoProfile", "-Command", ps_cmd],
+                text=True, stderr=subprocess.DEVNULL, timeout=5
+            )
+            parts = output.split("---SPLIT---")
+            sticks_raw = json.loads(parts[0].strip()) if parts[0].strip() else []
+            array_raw = json.loads(parts[1].strip()) if len(parts) > 1 and parts[1].strip() else {}
+
+            sticks = sticks_raw if isinstance(sticks_raw, list) else [sticks_raw]
+            slots_used = len(sticks)
+            speed = sticks[0].get("ConfiguredClockSpeed", "Unknown") if sticks else "Unknown"
+            slots_total = (
+                array_raw[0].get("MemoryDevices") if isinstance(array_raw, list)
+                else array_raw.get("MemoryDevices", slots_used)
+            )
+
+            ram_details["speed_mhz"] = speed
+            ram_details["slots_used"] = slots_used
+            ram_details["slots_total"] = slots_total
+
+        elif os_name == "Darwin":  # macOS
+            output = subprocess.check_output(
+                ["system_profiler", "SPMemoryDataType", "-json"],
+                text=True, stderr=subprocess.DEVNULL, timeout=5
+            )
+            data = json.loads(output).get("SPMemoryDataType", [{}])[0]
+            ram_details["speed_mhz"] = data.get("dimm_speed", "Unified Memory")
+            ram_details["slots_used"] = 1
+            ram_details["slots_total"] = 1
+            ram_details["upgrade_advice"] = "Apple Unified Memory is soldered and cannot be upgraded post-purchase."
+
+        elif os_name == "Linux":
+            # Non-root fallback check; populates if dmidecode permissions allow
+            output = subprocess.check_output(
+                ["dmidecode", "-t", "memory"],
+                text=True, stderr=subprocess.DEVNULL, timeout=4
+            )
+            total_slots = output.count("Memory Device")
+            empty_slots = output.count("Size: No Module Installed")
+            ram_details["slots_total"] = total_slots
+            ram_details["slots_used"] = total_slots - empty_slots
+    except Exception:
+        pass
+
+    # Generate slot-aware upgrade advice
+    if isinstance(ram_details["slots_used"], int) and isinstance(ram_details["slots_total"], int):
+        free_slots = ram_details["slots_total"] - ram_details["slots_used"]
+        if free_slots > 0:
+            ram_details["upgrade_advice"] = f"{free_slots} empty RAM slot(s) available for direct drop-in expansion."
+        else:
+            ram_details["upgrade_advice"] = "All RAM slots occupied. Upgrading requires replacing existing sticks."
+
+    return ram_details
+
 def get_gpu_info():
     """Retrieve GPU models and VRAM details."""
     gpus = []
