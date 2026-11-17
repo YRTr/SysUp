@@ -1,7 +1,6 @@
 import requests
 
 # Regional hardware tax, import duty, and distributor markup multipliers
-# Baseline = 1.0 (US MSRP before local state tax)
 REGIONAL_HARDWARE_MULTIPLIERS = {
     "US": 1.08,  # Avg state sales tax
     "IN": 1.18,  # 18% GST + import duties on high-end components
@@ -12,6 +11,19 @@ REGIONAL_HARDWARE_MULTIPLIERS = {
     "BR": 1.60,  # Heavy import tariffs on electronics
     "DEFAULT": 1.15
 }
+
+# Average residential/commercial electricity cost in USC per kWh
+REGIONAL_ELECTRICITY_USD_KWH = {
+    "US": 0.16,
+    "IN": 0.09,  # ~₹7.5 - ₹8.5 per unit (kWh) commercial/high-slab average
+    "GB": 0.34,
+    "DE": 0.38,
+    "CA": 0.13,
+    "AU": 0.25,
+    "BR": 0.17,
+    "DEFAULT": 0.18
+}
+
 
 CURRENCY_SYMBOLS = {
     "USD": "$",
