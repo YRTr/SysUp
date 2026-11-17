@@ -74,7 +74,7 @@ def get_exchange_rate(target_currency="USD"):
         }
         return fallback_rates.get(target_currency, 1.0)
 
-def format_local_Currency(amount, currency_code):
+def format_local_currency(amount, currency_code):
     """Format numbers cleanly (using Indian numbering system for INR, standard elsewhere)."""
     symbol = CURRENCY_SYMBOLS.get(currency_code, f"{currency_code} ")
     rounded_amt = round(amount, -2) if amount > 1000 else round(amount, 2)
@@ -108,7 +108,7 @@ def calculate_localized_budget(base_usd_min, base_usd_max, location_data=None):
         "base_usd_range": f"${base_usd_min:,} - ${base_usd_max:,}",
         "estimated_local_min": round(local_min),
         "estimated_local_max": round(local_max),
-        "formatted_budget": f"{format_local_Currency(local_min, currency_code)} - {format_local_Currency(local_max, currency_code)}"
+        "formatted_budget": f"{format_local_currency(local_min, currency_code)} - {format_local_currency(local_max, currency_code)}"
     }
 
 if __name__ == "__main__":
