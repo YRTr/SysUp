@@ -86,6 +86,19 @@ def get_exchange_rate(target_currency="USD"):
         }
         return fallback_rates.get(target_currency, 1.0)
 
+def _format_indian_grouping(number_int):
+    """Format an integer using the Indian Lakh/Crore comma system (e.g., 12,34,567)."""
+    s = str(abs(int(number_int)))
+    if len(s) <= 3:
+        return s
+    last_three = s[-3:]
+    remaining = s[:-3]
+    groups = []
+    while remaining:
+        groups.append(remaining[-2:])
+        remaining = remaining[:-2]
+    return ",".join(reversed(groups)) + "," + last_three
+
 def format_local_currency(amount, currency_code):
     """Format numbers cleanly (using Indian numbering system for INR, standard elsewhere)."""
     symbol = CURRENCY_SYMBOLS.get(currency_code, f"{currency_code} ")
