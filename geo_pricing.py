@@ -185,7 +185,13 @@ def calculate_power_and_opex(avg_watts, daily_hours=8, is_datacenter=False, loca
 if __name__ == "__main__":
     import json
 
-    # Test 1: Detect location and price a $1,800 - $2,200 high-end workstation
     user_loc = get_user_location()
-    budget_estimate = calculate_localized_budget(1800, 2200, user_loc)
-    print(json.dumps(budget_estimate, indent=4))
+
+    print("--- 1. Workstation CapEx & OpEx (850W Load @ 12 hrs/day) ---")
+    ws_capex = calculate_localized_budget(1800, 2300, user_loc)
+    ws_opex = calculate_power_and_opex(avg_watts=850, daily_hours=12, is_datacenter=False, location_data=user_loc)
+    print(json.dumps({"capex": ws_capex, "opex": ws_opex}, indent=4))
+
+    print("\n--- 2. Small Data Center Rack OpEx (9,500W Load @ 24 hrs/day) ---")
+    dc_opex = calculate_power_and_opex(avg_watts=9500, daily_hours=24, is_datacenter=True, location_data=user_loc)
+    print(json.dumps(dc_opex, indent=4))
