@@ -99,10 +99,13 @@ def _format_indian_grouping(number_int):
         remaining = remaining[:-2]
     return ",".join(reversed(groups)) + "," + last_three
 
-def format_local_currency(amount, currency_code):
+def format_local_currency(amount, currency_code, round_hundreds=True):
     """Format numbers cleanly (using Indian numbering system for INR, standard elsewhere)."""
     symbol = CURRENCY_SYMBOLS.get(currency_code, f"{currency_code} ")
-    rounded_amt = round(amount, -2) if amount > 1000 else round(amount, 2)
+    rounded_amt = round(amount, -2) if (round_hundreds and amount > 1000) else round(amount, 2)
+
+    if currency_code == "INR":
+        return f"{symbol}{_format_indian_grouping(rounded_amt)}"
     return f"{symbol}{int(rounded_amt):,}"
 
 def calculate_localized_budget(base_usd_min, base_usd_max, location_data=None):
