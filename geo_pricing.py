@@ -139,6 +139,49 @@ def calculate_localized_budget(base_usd_min, base_usd_max, location_data=None):
         "formatted_budget": f"{format_local_currency(local_min, currency_code)} - {format_local_currency(local_max, currency_code)}"
     }
 
+
+def calculate_power_and_opex(avg_watts, daily_hours=8, is_datacenter=False, location_data=None):
+    """
+    Calculate monthly electricity OpEx, PUE cooling overhead, and thermal BTU output.
+    1 Watt = 3.41214 BTU/hr; 1 Ton of AC cooling = 12,000 BTU/hr.
+    """
+    if not location_data:
+        location_data = get_user_location()
+
+    country_code = location_data["country_code"]
+    currency_code = location_data["currency"]
+    exchange_rate = get_exchange_rate(currency_code)
+
+    # Power Usage Effectiveness (PUE): Data centers require ~35% extra power for cooling/PDUs
+    pue_multiplier = 1.35 if is_datacenter else 1.0
+    effective_watts = avg_watts * pue_multiplier
+
+    # Monthly energy usage in kWh (30-day month)
+    monthly_kwh = round((effective_watts / 1000.0) * daily_hours * 30, 1)
+
+    # Local electricity cost calculation
+    usd_per_kwh = REGIONAL_ELECTRICITY_USD_KWH.get(
+        country_code, REGIONAL_ELECTRICITY_USD_KWH["DEFAULT"]
+    )
+    local_rate_per_kwh = round(usd_per_kwh * exchange_rate, 2)
+    monthly_cost_local = monthly_kwh * local_rate_per_kwh
+
+    # Thermal output & cooling requirements
+    btu_per_hour = round(avg_watts * 3.41214)
+    ac_tons_required = round(btu_per_hour / 12000, 2)
+
+    return {
+        "hardware_load_watts": avg_watts,
+        "pue_multiplier": pue_multiplier,
+        "effective_wall_watts": round(effective_watts),
+        "daily_hours_assumed": daily_hours,
+        "monthly_kwh": monthly_kwh,
+        "local_tariff_per_kwh": f"{CURRENCY_SYMBOLS.get(currency_code, '')}{local_rate_per_kwh}/kWh",
+        "estimated_monthly_opex": format_local_currency(monthly_cost_local, currency_code, round_hundreds=False),
+        "thermal_output_btu_hr": f"{btu_per_hour:,} BTU/hr",
+        "recommended_cooling_tons": f"{ac_tons_required} Ton(s) of AC cooling"
+    }
+
 if __name__ == "__main__":
     import json
 
