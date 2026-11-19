@@ -1,5 +1,9 @@
 from scanner import scan_system_specs
-from geo_pricing import get_user_location, calculate_localized_budget
+from geo_pricing import (
+    get_user_location,
+    calculate_localized_budget,
+    calculate_power_and_opex
+)
 
 # Workload target matrix and hardware recommendations
 WORKLOAD_PROFILES = {
