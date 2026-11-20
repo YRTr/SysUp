@@ -84,6 +84,20 @@ WORKLOAD_PROFILES = {
     }
 }
 
+
+# Precision byte weights and task overhead multipliers for dynamic VRAM estimation
+PRECISION_BYTES = {
+    "fp16": 2.0,   # BF16 / FP16
+    "int8": 1.0,   # FP8 / INT8
+    "int4": 0.5    # 4-bit QLoRA / GGUF
+}
+
+TASK_OVERHEAD = {
+    "inference": 1.25,     # Model weights + KV cache + runtime buffers
+    "lora_finetune": 1.75, # Weights + LoRA adapters + activations + gradients
+    "full_train": 4.5      # Weights + full gradients + AdamW optimizer states
+}
+
 def analyze_bottlenecks(current_specs, target_min):
     """Compare current scanned specs against workload minimum thresholds."""
     bottlenecks = []
