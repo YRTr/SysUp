@@ -98,6 +98,15 @@ TASK_OVERHEAD = {
     "full_train": 4.5      # Weights + full gradients + AdamW optimizer states
 }
 
+def estimate_ai_vram_gb(model_params_b, precision="int4", task="lora_finetune"):
+    """
+    Calculate estimated VRAM (GB) required for an AI model workload.
+    Formula: Params (B) * Bytes_per_Param * Task_Overhead_Multiplier
+    """
+    bytes_per_param = PRECISION_BYTES.get(precision.lower(), 0.5)
+    overhead = TASK_OVERHEAD.get(task.lower(), 1.25)
+    return round(model_params_b * bytes_per_param * overhead, 1)
+
 def analyze_bottlenecks(current_specs, target_min):
     """Compare current scanned specs against workload minimum thresholds."""
     bottlenecks = []
