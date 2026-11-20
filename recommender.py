@@ -5,70 +5,81 @@ from geo_pricing import (
     calculate_power_and_opex
 )
 
-# Workload target matrix and hardware recommendations
+# Workload target matrix with current-gen hardware, wattage, and daily duty cycles
 WORKLOAD_PROFILES = {
     "fullstack_dev": {
         "title": "Full-Stack & Containerized Development (MERN, Docker, Local DBs)",
         "tier": "prosumer",
         "min_specs": {"cpu_cores": 8, "ram_gb": 32, "vram_gb": 0, "storage_gb": 1000},
+        "duty_cycle_hours": 10,
         "pc_build": {
             "cpu": "AMD Ryzen 7 9700X / Intel Core Ultra 7 265K",
             "gpu": "Integrated or RTX 4060 8GB",
             "ram": "32GB DDR5-6000MHz",
             "storage": "1TB PCIe 4.0 NVMe SSD",
+            "avg_watts": 100,
             "usd_range": (950, 1250)
         },
         "laptop_option": {
             "models": "MacBook Air M3 (24GB/1TB) / Lenovo ThinkPad E16 Gen 3 / ASUS Zenbook 14 Core Ultra",
-            "specs": "16-24GB Unified/DDR5 RAM, 1TB NVMe, 8+ Core CPU",
-            "usd_range": (1100, 1450)
+            "specs": "24-32GB Unified/DDR5 RAM, 1TB NVMe, 8+ Core CPU",
+            "avg_watts": 45,
+            "usd_range": (1150, 1500)
         }
     },
     "gaming_aaa": {
         "title": "High-Refresh 1440p / 4K AAA Gaming",
         "tier": "prosumer",
         "min_specs": {"cpu_cores": 8, "ram_gb": 32, "vram_gb": 16, "storage_gb": 2000},
+        "duty_cycle_hours": 5,
         "pc_build": {
             "cpu": "AMD Ryzen 7 9800X3D",
             "gpu": "NVIDIA RTX 4070 Ti Super 16GB / RTX 5070 Ti 16GB",
             "ram": "32GB DDR5-6000MHz CL30",
             "storage": "2TB PCIe 4.0 NVMe SSD",
-            "usd_range": (1650, 2100)
+            "avg_watts": 450,
+            "usd_range": (1750, 2250)
         },
         "laptop_option": {
             "models": "ASUS ROG Zephyrus G16 / Lenovo Legion Pro 7i",
             "specs": "Core Ultra 9 / Ryzen 9, Mobile RTX 4080 12GB, 32GB RAM, 2TB SSD",
-            "usd_range": (2100, 2600)
+            "avg_watts": 190,
+            "usd_range": (2300, 2850)
         }
     },
     "ai_local_finetuning": {
         "title": "Local AI Image Generation, LoRA Fine-Tuning & LLM Quantized Inference",
         "tier": "workstation",
         "min_specs": {"cpu_cores": 12, "ram_gb": 64, "vram_gb": 16, "storage_gb": 2000},
+        "duty_cycle_hours": 12,
         "pc_build": {
             "cpu": "AMD Ryzen 9 9900X (12-Core / 24-Thread)",
-            "gpu": "NVIDIA RTX 4070 Ti Super 16GB / Used RTX 3090 24GB",
+            "gpu": "NVIDIA RTX 4070 Ti Super 16GB / RTX 5090 32GB (for heavy batch LoRA)",
             "ram": "64GB DDR5-6000MHz",
             "storage": "2TB PCIe 4.0 NVMe SSD (High TBW for model checkpoints)",
-            "usd_range": (1800, 2300)
+            "avg_watts": 650,
+            "usd_range": (2000, 3800)
         },
         "laptop_option": {
             "models": "MacBook Pro 16 M4 Max (64GB Unified Memory) / MSI Titan 18 HX (RTX 4090 16GB)",
-            "specs": "Unified Memory architecture or 175W TGP Mobile GPU, 64GB RAM, 2TB SSD",
-            "usd_range": (3200, 4000)
+            "specs": "64GB Unified Memory architecture or 175W TGP Mobile GPU, 64GB RAM, 2TB NVMe",
+            "avg_watts": 140,
+            "usd_range": (3400, 4400)
         }
     },
     "enterprise_ai_datacenter": {
         "title": "Foundation Model Training (70B+ Params) / High-Density Crypto Node Cluster",
         "tier": "datacenter",
-        "min_specs": {"cpu_cores": 64, "ram_gb": 512, "vram_gb": 320, "storage_gb": 15000},
+        "min_specs": {"cpu_cores": 64, "ram_gb": 512, "vram_gb": 384, "storage_gb": 15000},
+        "duty_cycle_hours": 24,
         "datacenter_rack": {
             "compute_nodes": "2x 4U GPU Servers (Dual AMD EPYC 9354 32-Core per node)",
-            "gpu_cluster": "4x to 8x NVIDIA H100 (80GB) or RTX 6000 Ada (48GB) via NVLink",
+            "gpu_cluster": "4x NVIDIA RTX PRO 6000 Blackwell (96GB GDDR7 ECC each) or 8x HGX B200 (180GB HBM3e via NVLink)",
             "memory": "512GB - 1TB DDR5 ECC Registered RAM",
             "storage_san": "15.36TB Enterprise U.3 NVMe RAID Array (Scratch) + 40TB NAS",
             "networking_power": "42U Rack, 100GbE Mellanox InfiniBand Switch, Dual 3-Phase PDU + 10kVA Online UPS, Dedicated Precision Cooling",
-            "usd_range": (45000, 115000)
+            "avg_watts": 9500,
+            "usd_range": (65000, 250000)
         }
     }
 }
