@@ -155,6 +155,46 @@ def analyze_bottlenecks(current_specs, target_min):
 
     return bottlenecks, deficits
 
+
+def calculate_surgical_upgrade(current_specs, target_min, deficits, location_data):
+    """
+    Evaluate whether a modular drop-in component upgrade is viable instead of a full rebuild.
+    Uses Module 1 form factor, RAM slot availability, and drive media type.
+    """
+    is_desktop = current_specs.get("form_factor", {}).get("is_modular_desktop", True)
+    ram_info = current_specs.get("ram", {})
+    slots_used = ram_info.get("slots_used", "Unknown")
+    slots_total = ram_info.get("slots_total", "Unknown")
+    is_mac_soldered = "Unified" in str(ram_info.get("speed_mhz", ""))
+
+    parts_to_buy = []
+    notes = []
+    usd_min = 0
+    usd_max = 0
+    viable = True
+
+    # 1. RAM Drop-In Assessment
+    if deficits["ram_deficit_gb"] > 0:
+        if is_mac_soldered:
+            viable = False
+            notes.append("RAM is soldered Unified Memory — a surgical RAM upgrade is impossible.")
+        else:
+            free_slots = (
+                slots_total - slots_used
+                if isinstance(slots_used, int) and isinstance(slots_total, int)
+                else 0
+            )
+            if free_slots > 0:
+                add_gb = int(target_min["ram_gb"] - current_specs["ram"]["total_gb"])
+                parts_to_buy.append(f"Add {add_gb}GB+ matching RAM stick(s) into {free_slots} empty slot(s)")
+                usd_min += max(45, int(add_gb * 2.8))
+                usd_max += max(75, int(add_gb * 3.8))
+            else:
+                target_gb = target_min["ram_gb"]
+                parts_to_buy.append(f"Replace existing RAM with a full {target_gb}GB kit (all slots occupied)")
+                usd_min += int(target_gb * 3.0)
+                usd_max += int(target_gb * 4.2)
+
 def generate_recommendation(goal_key, current_specs=None, location_data=None):
     """Generate full upgrade path and localized budgets based on user goal."""
     if goal_key not in WORKLOAD_PROFILES:
