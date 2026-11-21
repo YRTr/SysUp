@@ -110,25 +110,40 @@ def estimate_ai_vram_gb(model_params_b, precision="int4", task="lora_finetune"):
 def analyze_bottlenecks(current_specs, target_min):
     """Compare current scanned specs against workload minimum thresholds."""
     bottlenecks = []
+    deficits = {
+        "cpu_short": False,
+        "ram_deficit_gb": 0,
+        "vram_deficit_gb": 0,
+        "storage_deficit_gb": 0,
+        "slow_hdd": False
+    }
 
     curr_cores = current_specs["cpu"].get("physical_cores") or 4
     curr_ram = current_specs["ram"].get("total_gb", 0)
     curr_storage = current_specs["storage"].get("total_gb", 0)
+    media_type = current_specs["storage"]. get("media_type", "")
     curr_vram = max([gpu.get("vram_total_gb", 0) for gpu in current_specs.get("gpus", [])], default=0)
 
     if curr_cores < target_min["cpu_cores"]:
+        deficits["cpu_short"] = True
         bottlenecks.append(
             f"CPU Cores: Have {curr_cores} physical cores, need at least {target_min['cpu_cores']}."
         )
     if curr_ram < target_min["ram_gb"]:
+        ram_gap = round(target_min["ram_gb"] - curr_ram, 1)
+        deficits["ram_deficit_gb"] = ram_gap
         bottlenecks.append(
-            f"System RAM: Have {curr_ram} GB, need {target_min['ram_gb']} GB (short by {round(target_min['ram_gb'] - curr_ram, 1)} GB)."
+            f"System RAM: Have {curr_ram} GB, need {target_min['ram_gb']} GB (short by {ram_gap} GB)."
         )
     if curr_vram < target_min["vram_gb"]:
+        vram_gap = round(target_min["vram_gb"] - curr_vram, 1)
+        deficits["vram_deficit_gb"] = vram_gap
         bottlenecks.append(
             f"GPU VRAM: Have {curr_vram} GB dedicated VRAM, need {target_min['vram_gb']} GB for CUDA/tensor workloads."
         )
     if curr_storage < target_min["storage_gb"]:
+        storage_gap = round(target_min["storage_gb"] - curr_storage, 1)
+        deficits["storage_deficits_gb"] = storage_gap
         bottlenecks.append(
             f"Storage Capacity: Primary drive is {curr_storage} GB, recommended is {target_min['storage_gb']} GB+ NVMe."
         )
