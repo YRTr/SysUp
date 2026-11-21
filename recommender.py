@@ -173,6 +173,28 @@ def calculate_surgical_upgrade(current_specs, target_min, deficits, location_dat
     usd_max = 0
     viable = True
 
+    # 1. RAM Drop-In Assessment
+    if deficits["ram_deficit_gb"] > 0:
+        if is_mac_soldered:
+            viable = False
+            notes.append("RAM is soldered Unified Memory — a surgical RAM upgrade is impossible.")
+        else:
+            free_slots = (
+                slots_total - slots_used
+                if isinstance(slots_used, int) and isinstance(slots_total, int)
+                else 0
+            )
+            if free_slots > 0:
+                add_gb = int(target_min["ram_gb"] - current_specs["ram"]["total_gb"])
+                parts_to_buy.append(f"Add {add_gb}GB+ matching RAM stick(s) into {free_slots} empty slot(s)")
+                usd_min += max(45, int(add_gb * 2.8))
+                usd_max += max(75, int(add_gb * 3.8))
+            else:
+                target_gb = target_min["ram_gb"]
+                parts_to_buy.append(f"Replace existing RAM with a full {target_gb}GB kit (all slots occupied)")
+                usd_min += int(target_gb * 3.0)
+                usd_max += int(target_gb * 4.2)
+
 
 
 
