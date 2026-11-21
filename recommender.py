@@ -147,8 +147,13 @@ def analyze_bottlenecks(current_specs, target_min):
         bottlenecks.append(
             f"Storage Capacity: Primary drive is {curr_storage} GB, recommended is {target_min['storage_gb']} GB+ NVMe."
         )
+    if "HDD" in media_type.upper():
+        deficits["slow_hdd"] = True
+        bottlenecks.append(
+            f"Storage Speed: Detected rotational drive ({media_type}). Upgrade to PCIe 4.0 NVMe SSD to avoid I/O bottlenecks."
+        )
 
-    return bottlenecks
+    return bottlenecks, deficits
 
 def generate_recommendation(goal_key, current_specs=None, location_data=None):
     """Generate full upgrade path and localized budgets based on user goal."""
