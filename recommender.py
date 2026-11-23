@@ -194,6 +194,12 @@ def calculate_surgical_upgrade(current_specs, target_min, deficits, location_dat
                 parts_to_buy.append(f"Replace existing RAM with a full {target_gb}GB kit (all slots occupied)")
                 usd_min += int(target_gb * 3.0)
                 usd_max += int(target_gb * 4.2)
+    # 2. Storage Drop-In Assessment
+    if deficits["storage_deficit_gb"] > 0 or deficits["slow_hdd"]:
+        drive_size = "2TB" if target_min["storage_gb"] >= 2000 else "1TB"
+        parts_to_buy.append(f"{drive_size} PCIe 4.0 NVMe M.2 SSD")
+        usd_min += 125 if drive_size == "2TB" else 70
+        usd_max += 175 if drive_size == "2TB" else 105
 
 
 
