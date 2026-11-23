@@ -201,6 +201,28 @@ def calculate_surgical_upgrade(current_specs, target_min, deficits, location_dat
         usd_min += 125 if drive_size == "2TB" else 70
         usd_max += 175 if drive_size == "2TB" else 105
 
+    # 3. GPU Drop-In Assessment
+    if deficits["vram_deficit_gb"] > 0:
+        req_vram = target_min["vram_gb"]
+        if not is_desktop:
+            viable = False
+            notes.append(
+                "Laptop GPU is soldered. Internal GPU swap is impossible — consider an OCuLink/Thunderbolt 4 eGPU enclosure or a full system upgrade."
+            )
+        else:
+            if req_vram <= 16:
+                parts_to_buy.append("NVIDIA RTX 5070 Ti 16GB (Drop-In PCIe GPU)")
+                usd_min += 750
+                usd_max += 950
+                notes.append("Verify your desktop PSU is at least 750W ATX 3.0/3.1 before installing.")
+            elif req_vram <= 32:
+                parts_to_buy.append("NVIDIA RTX 5090 32GB (Drop-In PCIe GPU) + 1000W ATX 3.1 PSU")
+                usd_min += 2200
+                usd_max += 2800
+                notes.append("Requires a 1000W+ ATX 3.1 power supply and high-airflow chassis clearance.")
+            else:
+                viable = False
+                notes.append("Required VRAM exceeds single consumer GPU limits (>32GB).")
 
 
 
