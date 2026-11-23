@@ -224,6 +224,15 @@ def calculate_surgical_upgrade(current_specs, target_min, deficits, location_dat
                 viable = False
                 notes.append("Required VRAM exceeds single consumer GPU limits (>32GB).")
 
+    # 4. CPU Assessment
+    if deficits["cpu_short"]:
+        if not is_desktop:
+            viable = False
+            notes.append("Laptop CPU is soldered and cannot be upgraded.")
+        else:
+            parts_to_buy.append(f"{target_min['cpu_cores']}+ Core Desktop CPU (Verify motherboard socket compatibility)")
+            usd_min += 300
+            usd_max += 480
 
 
 def generate_recommendation(goal_key, current_specs=None, location_data=None):
