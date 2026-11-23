@@ -244,6 +244,7 @@ def calculate_surgical_upgrade(current_specs, target_min, deficits, location_dat
             "pricing_details": None
         }
 
+    pricing = calculate_localized_budget(usd_min, usd_max, location_data) if viable else None
 
 def generate_recommendation(goal_key, current_specs=None, location_data=None):
     """Generate full upgrade path and localized budgets based on user goal."""
