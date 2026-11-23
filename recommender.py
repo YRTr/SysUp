@@ -234,6 +234,16 @@ def calculate_surgical_upgrade(current_specs, target_min, deficits, location_dat
             usd_min += 300
             usd_max += 480
 
+    if not parts_to_buy and viable:
+        return {
+            "viable": True,
+            "status": "No hardware purchases required — your current machine passes.",
+            "parts_list": [],
+            "notes": notes,
+            "estimated_budget": "0",
+            "pricing_details": None
+        }
+
 
 def generate_recommendation(goal_key, current_specs=None, location_data=None):
     """Generate full upgrade path and localized budgets based on user goal."""
