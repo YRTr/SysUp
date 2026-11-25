@@ -246,6 +246,16 @@ def calculate_surgical_upgrade(current_specs, target_min, deficits, location_dat
 
     pricing = calculate_localized_budget(usd_min, usd_max, location_data) if viable else None
 
+    return {
+        "viable": viable,
+        "status": "Surgical drop-in upgrade recommended!" if viable else "Full system replacement recommended (chassis/hardware limits reached).",
+        "chassis_detected": current_specs.get("form_factor", {}).get("chassis_type", "Unknown"),
+        "parts_list": parts_to_buy,
+        "notes": notes,
+        "estimated_budget": pricing["formatted_budget"] if pricing else "N/A (See Full Build / Laptop Options)",
+        "pricing_details": pricing
+    }
+
 def generate_recommendation(goal_key, current_specs=None, location_data=None):
     """Generate full upgrade path and localized budgets based on user goal."""
     if goal_key not in WORKLOAD_PROFILES:
