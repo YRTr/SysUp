@@ -333,27 +333,44 @@ def generate_recommendation(goal_key, current_specs=None, location_data=None, ai
             "opex_and_cooling": dc_opex
         }
 
-    # Route 2: Standard / Workstation Workload -> Recommend PC + Laptop paths
+    # Route 2: Consumer / Workstation -> Surgical Drop-In Kit + Full PC + Laptop + OpEx
     else:
+        surgical_kit = calculate_surgical_upgrade(current_specs, target_min, deficits, location_data)
         pc = profile["pc_build"]
         laptop = profile["laptop_option"]
 
-        pc_budget = calculate_localized_budget(pc["usd_range"][0], pc["usd_range"][1], location_data)
-        laptop_budget = calculate_localized_budget(laptop["usd_range"][0], laptop["usd_range"][1], location_data)
+        pc_capex = calculate_localized_budget(pc["usd_range"][0], pc["usd_range"][1], location_data)
+        pc_opex = calculate_power_and_opex(
+            avg_watts=pc["avg_watts"],
+            daily_hours=profile["duty_cycle_hours"],
+            is_datacenter=False,
+            location_data=location_data
+        )
 
+        laptop_capex = calculate_localized_budget(laptop["usd_range"][0], laptop["usd_range"][1], location_data)
+        laptop_opex = calculate_power_and_opex(
+            avg_watts=laptop["avg_watts"],
+            daily_hours=profile["duty_cycle_hours"],
+            is_datacenter=False,
+            location_data=location_data
+        )
+
+        report["recommendations"]["surgical_upgrade_kit"] = surgical_kit
         report["recommendations"]["desktop_pc_upgrade"] = {
             "cpu": pc["cpu"],
             "gpu": pc["gpu"],
             "ram": pc["ram"],
             "storage": pc["storage"],
-            "estimated_budget": pc_budget["formatted_budget"],
-            "pricing_details": pc_budget
+            "estimated_budget": pc_capex["formatted_budget"],
+            "pricing_details": pc_capex,
+            "opex_and_cooling": pc_opex
         }
         report["recommendations"]["laptop_alternative"] = {
             "recommended_models": laptop["models"],
             "target_specs": laptop["specs"],
-            "estimated_budget": laptop_budget["formatted_budget"],
-            "pricing_details": laptop_budget
+            "estimated_budget": laptop_capex["formatted_budget"],
+            "pricing_details": laptop_capex,
+            "opex_and_cooling": laptop_opex
         }
 
     return report
