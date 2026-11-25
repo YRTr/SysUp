@@ -256,7 +256,7 @@ def calculate_surgical_upgrade(current_specs, target_min, deficits, location_dat
         "pricing_details": pricing
     }
 
-def generate_recommendation(goal_key, current_specs=None, location_data=None):
+def generate_recommendation(goal_key, current_specs=None, location_data=None, ai_params=None):
     """
     Generate full upgrade path, surgical delta kit, localized CapEx, and monthly OpEx.
     Optional `ai_params`: {"model_params_b": 70, "precision": "fp16", "task": "lora_finetune"}
@@ -274,6 +274,24 @@ def generate_recommendation(goal_key, current_specs=None, location_data=None):
     target_min = dict(profile["min_specs"])
     active_tier = profile["tier"]
     dynamic_ai_summary = None
+
+    # Apply dynamic AI VRAM sizing if custom model parameters are supplied
+    if ai_params and goal_key in ("ai_local_finetuning", "enterprise_ai_datacenter"):
+        params_b = ai_params.get("model_params_b", 8)
+        precision = ai_params.get("precision", "int4")
+        task = ai_params.get("task", "lora_finetune")
+        req_vram = estimate_ai_vram_gb(params_b, precision, task)
+
+        target_min["vram_gb"] = req_vram
+        target_min["ram_gb"] = max(target_min["ram_gb"], int(req_vram * 1.5))
+        dynamic_ai_summary = (
+            f"Dynamic AI Sizing: {params_b}B model @ {precision.upper()} ({task}) requires ~{req_vram} GB VRAM."
+        )
+
+        # Auto-escalate to Small Data Center if VRAM exceeds single workstation practical limits (>48GB)
+        if req_vram > 48:
+            active_tier = "datacenter"
+            profile = WORKLOAD_PROFILES["enterprise_ai_datacenter"]
 
     report = {
         "selected_goal": profile["title"],
