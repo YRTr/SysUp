@@ -293,9 +293,13 @@ def generate_recommendation(goal_key, current_specs=None, location_data=None, ai
             active_tier = "datacenter"
             profile = WORKLOAD_PROFILES["enterprise_ai_datacenter"]
 
+    bottlenecks, deficits = analyze_bottlenecks(current_specs, target_min)
+    meets_requirements = len(bottlenecks) == 0
+
     report = {
         "selected_goal": profile["title"],
-        "workload_tier": profile["tier"],
+        "workload_tier": active_tier,
+        "dynamic_ai_calculation": dynamic_ai_summary,
         "system_passed": meets_requirements,
         "detected_bottlenecks": bottlenecks if not meets_requirements else [
             "Your current system meets or exceeds all baseline requirements!"],
