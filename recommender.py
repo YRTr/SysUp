@@ -257,7 +257,10 @@ def calculate_surgical_upgrade(current_specs, target_min, deficits, location_dat
     }
 
 def generate_recommendation(goal_key, current_specs=None, location_data=None):
-    """Generate full upgrade path and localized budgets based on user goal."""
+    """
+    Generate full upgrade path, surgical delta kit, localized CapEx, and monthly OpEx.
+    Optional `ai_params`: {"model_params_b": 70, "precision": "fp16", "task": "lora_finetune"}
+    """
     if goal_key not in WORKLOAD_PROFILES:
         raise ValueError(f"Unknown workload goal. Choose from: {list(WORKLOAD_PROFILES.keys())}")
 
@@ -266,9 +269,11 @@ def generate_recommendation(goal_key, current_specs=None, location_data=None):
     if not location_data:
         location_data = get_user_location()
 
+    # Copy baseline profile so dynamic overrides don't mutate the global dict
     profile = WORKLOAD_PROFILES[goal_key]
-    bottlenecks = analyze_bottlenecks(current_specs, profile["min_specs"])
-    meets_requirements = len(bottlenecks) == 0
+    target_min = dict(profile["min_specs"])
+    active_tier = profile["tier"]
+    dynamic_ai_summary = None
 
     report = {
         "selected_goal": profile["title"],
