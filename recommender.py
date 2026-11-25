@@ -307,14 +307,20 @@ def generate_recommendation(goal_key, current_specs=None, location_data=None, ai
         "recommendations": {}
     }
 
-    # Route 1: Extreme Workload -> Recommend Small Data Center Setup
-    if profile["tier"] == "datacenter":
+    # Route 1: Extreme / Escalated Workload -> Small Data Center Rack + OpEx/HVAC
+    if active_tier == "datacenter":
         dc = profile["datacenter_rack"]
-        dc_budget = calculate_localized_budget(dc["usd_range"][0], dc["usd_range"][1], location_data)
+        dc_capex = calculate_localized_budget(dc["usd_range"][0], dc["usd_range"][1], location_data)
+        dc_opex = calculate_power_and_opex(
+            avg_watts=dc["avg_watts"],
+            daily_hours=profile["duty_cycle_hours"],
+            is_datacenter=True,
+            location_data=location_data
+        )
 
         report["recommendations"]["warning"] = (
-            "Consumer desktops and laptops cannot handle this workload efficiently due to PCIe lane, "
-            "memory bandwidth, and thermal limits. A dedicated small data center / server rack is required."
+            "Workload exceeds consumer desktop/laptop memory bandwidth and thermal limits. "
+            "A dedicated small data center / server rack with precision cooling is required."
         )
         report["recommendations"]["small_datacenter_blueprint"] = {
             "compute_nodes": dc["compute_nodes"],
@@ -322,8 +328,9 @@ def generate_recommendation(goal_key, current_specs=None, location_data=None, ai
             "memory": dc["memory"],
             "storage_san": dc["storage_san"],
             "infrastructure": dc["networking_power"],
-            "estimated_budget": dc_budget["formatted_budget"],
-            "pricing_details": dc_budget
+            "estimated_budget": dc_capex["formatted_budget"],
+            "pricing_details": dc_capex,
+            "opex_and_cooling": dc_opex
         }
 
     # Route 2: Standard / Workstation Workload -> Recommend PC + Laptop paths
