@@ -1,12 +1,13 @@
+from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from scanner import scan_system_specs
 from geo_pricing import get_user_location
 from recommender import WORKLOAD_PROFILES, generate_recommendation
 
-app = FastAPI(title="Hardware Spec & Upgrade Advisor API")
+app = FastAPI(title="Hardware Spec & Upgrade Advisor API v2")
 
 # Allow CORS for local React frontend development (Vite/CRA)
 app.add_middleware(
@@ -20,6 +21,11 @@ app.add_middleware(
 # Cache specs and location on startup so switching workloads in the UI is instant
 CACHED_SPECS = None
 CACHED_LOCATION = None
+
+class AIParams(BaseModel):
+    model_params_b: float = Field(default=14.0, ge=1.0, le=1000.0)
+    precision: str = Field(default="int4")       # fp16, int8, int4
+    task: str = Field(default="lora_finetune")   # inference, lora_finetune, full_train
 
 class EvaluateRequest(BaseModel):
     goal_key: str
